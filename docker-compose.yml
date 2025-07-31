@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Main logs distributor
+  distributor:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - WORKER_COUNT=4
+    depends_on:
+      - analyzer1
+      - analyzer2
+      - analyzer3
+      - analyzer4
+    networks:
+      - logs-network
+    restart: unless-stopped
+
+  # Mock analyzers
+  analyzer1:
+    build: .
+    command: node mock-analyzers/analyzer1.js
+    ports:
+      - "3001:3001"
+    networks:
+      - logs-network
+    restart: unless-stopped
+
+  analyzer2:
+    build: .
+    command: node mock-analyzers/analyzer2.js
+    ports:
+      - "3002:3002"
+    networks:
+      - logs-network
+    restart: unless-stopped
+
+  analyzer3:
+    build: .
+    command: node mock-analyzers/analyzer3.js
+    ports:
+      - "3003:3003"
+    networks:
+      - logs-network
+    restart: unless-stopped
+
+  analyzer4:
+    build: .
+    command: node mock-analyzers/analyzer4.js
+    ports:
+      - "3004:3004"
+    networks:
+      - logs-network
+    restart: unless-stopped
+
+  # Load testing with Artillery
+  load-test:
+    build: .
+    command: artillery run load-test.yml
+    depends_on:
+      - distributor
+    networks:
+      - logs-network
+    volumes:
+      - ./load-test.yml:/app/load-test.yml
+    environment:
+      - TARGET_URL=http://distributor:3000
+
+networks:
+  logs-network:
+    driver: bridge 
