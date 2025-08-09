@@ -25,9 +25,11 @@ Log Emitters → Distributor → Analyzers (A1: 0.1, A2: 0.4, A3: 0.2, A4: 0.3)
 - Node.js 18+ 
 - npm or yarn
 
-### Running the Demo Locally (Recommended)
+### Option 1: Local Development (Fastest Setup)
 
-1. **Clone and install dependencies:**
+**Prerequisites:** Node.js 18+
+
+1. **Install dependencies:**
    ```bash
    npm install
    ```
@@ -37,21 +39,27 @@ Log Emitters → Distributor → Analyzers (A1: 0.1, A2: 0.4, A3: 0.2, A4: 0.3)
    ./scripts/start-local.sh
    ```
 
-3. **Verify services are running:**
+3. **Verify services:**
    ```bash
    curl http://localhost:3000/health
    ```
 
-### Running with Docker (Optional)
+### Option 2: Docker Environment (Production-like)
 
-If you prefer Docker:
+**Prerequisites:** Docker Desktop (free, no account required)
 
-1. **Install Docker Desktop**
-2. **Start with Docker Compose:**
+1. **Install Docker Desktop:**
+   - Download from: https://www.docker.com/products/docker-desktop
+   - No Docker Hub account needed for local development
+
+2. **Start with Docker:**
    ```bash
-   ./scripts/start-demo.sh
-   # OR manually:
-   docker-compose up --build -d
+   ./scripts/start-docker.sh
+   ```
+
+3. **For clean rebuild:**
+   ```bash
+   ./scripts/start-docker.sh --clean
    ```
 
 ## 📊 API Endpoints
@@ -188,10 +196,25 @@ const ANALYZERS = [
 
 ## 💡 How to Stop the Demo
 
+### Local Mode
 ```bash
-# The local demo will show process IDs when started
-# Press Ctrl+C to stop all services
+# Press Ctrl+C in the terminal where you started the demo
 # Or kill individual processes if needed
+```
+
+### Docker Mode
+```bash
+# Stop all services
+docker-compose down
+
+# View running containers
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Restart services
+docker-compose restart
 ```
 
 ## 🔧 Troubleshooting

@@ -20,11 +20,13 @@ const limiter = rateLimit({
 });
 
 // Analyzer configuration (from the requirements)
+// Use Docker hostnames in Docker environment, localhost otherwise
+const isDocker = process.env.NODE_ENV === 'docker';
 const ANALYZERS = [
-  { id: 'A1', endpoint: 'http://localhost:3001', weight: 0.1 },
-  { id: 'A2', endpoint: 'http://localhost:3002', weight: 0.4 },
-  { id: 'A3', endpoint: 'http://localhost:3003', weight: 0.2 },
-  { id: 'A4', endpoint: 'http://localhost:3004', weight: 0.3 }
+  { id: 'A1', endpoint: `http://${isDocker ? 'analyzer1' : 'localhost'}:3001`, weight: 0.1 },
+  { id: 'A2', endpoint: `http://${isDocker ? 'analyzer2' : 'localhost'}:3002`, weight: 0.4 },
+  { id: 'A3', endpoint: `http://${isDocker ? 'analyzer3' : 'localhost'}:3003`, weight: 0.2 },
+  { id: 'A4', endpoint: `http://${isDocker ? 'analyzer4' : 'localhost'}:3004`, weight: 0.3 }
 ];
 
 if (cluster.isMaster) {
