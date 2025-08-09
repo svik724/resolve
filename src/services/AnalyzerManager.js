@@ -101,7 +101,7 @@ class AnalyzerManager extends EventEmitter {
     if (analyzer && analyzer.isOnline) {
       analyzer.isOnline = false;
       analyzer.consecutiveFailures++;
-      console.log(`Analyzer ${id} marked as offline (failure ${analyzer.consecutiveFailures})`);
+      console.log(`Analyzer ${id} marked as offline - (failure #${analyzer.consecutiveFailures})`);
       this.emit('analyzerOffline', id);
     }
   }
@@ -174,7 +174,7 @@ class AnalyzerManager extends EventEmitter {
         } else {
           this.markAnalyzerOffline(id);
         }
-      } catch (error) {
+      } catch (error) { // if the fetch doesn't return before analyzer.healthCheckTimeout, it will throw an error
         this.markAnalyzerOffline(id);
       }
     }

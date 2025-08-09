@@ -23,10 +23,9 @@ Log Emitters → Distributor → Analyzers (A1: 0.1, A2: 0.4, A3: 0.2, A4: 0.3)
 ### Prerequisites
 
 - Node.js 18+ 
-- Docker and Docker Compose
 - npm or yarn
 
-### Running the Demo
+### Running the Demo Locally (Recommended)
 
 1. **Clone and install dependencies:**
    ```bash
@@ -35,17 +34,24 @@ Log Emitters → Distributor → Analyzers (A1: 0.1, A2: 0.4, A3: 0.2, A4: 0.3)
 
 2. **Start the demo:**
    ```bash
-   ./scripts/start-demo.sh
-   ```
-
-   Or manually:
-   ```bash
-   docker-compose up --build -d
+   ./scripts/start-local.sh
    ```
 
 3. **Verify services are running:**
    ```bash
    curl http://localhost:3000/health
+   ```
+
+### Running with Docker (Optional)
+
+If you prefer Docker:
+
+1. **Install Docker Desktop**
+2. **Start with Docker Compose:**
+   ```bash
+   ./scripts/start-demo.sh
+   # OR manually:
+   docker-compose up --build -d
    ```
 
 ## 📊 API Endpoints
@@ -61,7 +67,21 @@ Log Emitters → Distributor → Analyzers (A1: 0.1, A2: 0.4, A3: 0.2, A4: 0.3)
 ### Example Usage
 
 ```bash
-# Submit a log packet
+# Submit a simple log packet
+curl -X POST http://localhost:3000/logs \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "emitterId": "test-service",
+    "messages": [
+      {
+        "level": "info",
+        "message": "User login successful",
+        "source": "auth-service"
+      }
+    ]
+  }'
+
+# Submit a complex log packet with metadata
 curl -X POST http://localhost:3000/logs \
   -H 'Content-Type: application/json' \
   -d '{
@@ -92,30 +112,59 @@ curl -X POST http://localhost:3000/logs \
       "priority": "normal"
     }
   }'
+
+# Test weighted distribution with multiple packets
+for i in {1..20}; do
+  curl -s -X POST http://localhost:3000/logs \
+    -H 'Content-Type: application/json' \
+    -d "{\"emitterId\": \"test-$i\", \"messages\": [{\"level\": \"info\", \"message\": \"Test $i\"}]}" > /dev/null
+done
+
+# Check distribution results
+curl http://localhost:3000/stats
 ```
 
-## 🧪 Testing
+## 🧪 Testing the System
+
+### Quick Test
+After starting the demo, test the weighted distribution:
+
+```bash
+# Send 50 test packets
+for i in {1..50}; do
+  curl -s -X POST http://localhost:3000/logs \
+    -H 'Content-Type: application/json' \
+    -d "{\"emitterId\": \"test-$i\", \"messages\": [{\"level\": \"info\", \"message\": \"Test $i\"}]}" > /dev/null
+done
+
+# Check distribution results (should show ~10%, 40%, 20%, 30%)
+curl -s http://localhost:3000/stats | python3 -m json.tool
+```
+
+### Monitor System Health
+```bash
+# Check overall system status
+curl http://localhost:3000/stats
+
+# Monitor processing queue
+curl http://localhost:3000/queue
+
+# Check analyzer health and weights
+curl http://localhost:3000/analyzers
+
+# Check individual analyzer health
+curl http://localhost:3001/health  # Analyzer A1
+curl http://localhost:3002/health  # Analyzer A2
+```
 
 ### Unit Tests
 ```bash
 npm test
 ```
 
-### Load Testing
+### Load Testing (if Artillery is installed)
 ```bash
 npm run load-test
-```
-
-### Manual Testing
-```bash
-# Check system status
-curl http://localhost:3000/stats
-
-# Monitor queue
-curl http://localhost:3000/queue
-
-# Check analyzer health
-curl http://localhost:3000/analyzers
 ```
 
 ## 🔧 Configuration
@@ -137,6 +186,37 @@ const ANALYZERS = [
 - `WORKER_COUNT` - Number of worker processes (default: CPU cores)
 - `NODE_ENV` - Environment (development/production)
 
+## 💡 How to Stop the Demo
+
+```bash
+# The local demo will show process IDs when started
+# Press Ctrl+C to stop all services
+# Or kill individual processes if needed
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**"Port already in use" error:**
+```bash
+# Kill processes on conflicting ports
+lsof -ti:3000,3001,3002,3003,3004 | xargs kill -9
+```
+
+**Services not responding:**
+```bash
+# Check if all services are running
+curl http://localhost:3000/health
+curl http://localhost:3001/health  # Should return analyzer A1 status
+curl http://localhost:3002/health  # Should return analyzer A2 status
+```
+
+**Only some analyzers receiving traffic:**
+- This is normal! With small packet counts, distribution appears uneven
+- Send 100+ packets to see proper weighted distribution
+- Use the test script in the "Quick Test" section above
+
 ## 🏗️ System Design
 
 ### Multithreading Implementation
@@ -145,7 +225,7 @@ The system uses Node.js **Cluster Module** for true multithreading:
 
 ```javascript
 if (cluster.isMaster) {
-  // Master process forks workers
+  // Master process forks workers  
   for (let i = 0; i < WORKER_COUNT; i++) {
     cluster.fork();
   }
