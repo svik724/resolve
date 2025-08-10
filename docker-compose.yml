@@ -5,7 +5,7 @@ services:
   distributor:
     build: .
     ports:
-      - "3000:3000"
+      - "4000:3000"
     environment:
       - NODE_ENV=docker
       - WORKER_COUNT=4
@@ -23,7 +23,7 @@ services:
     build: .
     command: node mock-analyzers/analyzer1.js
     ports:
-      - "3001:3001"
+      - "4001:3001"
     networks:
       - logs-network
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
     build: .
     command: node mock-analyzers/analyzer2.js
     ports:
-      - "3002:3002"
+      - "4002:3002"
     networks:
       - logs-network
     restart: unless-stopped
@@ -41,7 +41,7 @@ services:
     build: .
     command: node mock-analyzers/analyzer3.js
     ports:
-      - "3003:3003"
+      - "4003:3003"
     networks:
       - logs-network
     restart: unless-stopped
@@ -50,7 +50,7 @@ services:
     build: .
     command: node mock-analyzers/analyzer4.js
     ports:
-      - "3004:3004"
+      - "4004:3004"
     networks:
       - logs-network
     restart: unless-stopped

@@ -121,15 +121,6 @@ curl -X POST http://localhost:3000/logs \
     }
   }'
 
-# Test weighted distribution with multiple packets
-for i in {1..20}; do
-  curl -s -X POST http://localhost:3000/logs \
-    -H 'Content-Type: application/json' \
-    -d "{\"emitterId\": \"test-$i\", \"messages\": [{\"level\": \"info\", \"message\": \"Test $i\"}]}" > /dev/null
-done
-
-# Check distribution results
-curl http://localhost:3000/stats
 ```
 
 ## 🧪 Testing the System
@@ -170,9 +161,44 @@ curl http://localhost:3002/health  # Analyzer A2
 npm test
 ```
 
-### Load Testing (if Artillery is installed)
-```bash
-npm run load-test
+The test suite includes 6 comprehensive tests that validate the core functionality:
+
+1. **Initialization Test** - Verifies analyzers are added with correct weights (A1: 10%, A2: 40%, A3: 20%, A4: 30%)
+2. **Log Packet Creation** - Tests LogPacket and LogMessage model instantiation and validation
+3. **Weighted Distribution** - Runs 10,000 iterations to ensure analyzer selection follows the configured weights
+4. **Failure Handling** - Tests marking analyzers as offline when they fail health checks
+5. **Recovery Testing** - Verifies analyzers can be marked back online after going offline
+6. **Statistics Collection** - Ensures the system properly tracks and reports distribution statistics
+
+#### Test Output Example
+When you run `npm test`, you'll see output similar to this:
+
+```
+ PASS  test/distribution.test.js
+  Distribution Service Tests
+    ✓ should initialize analyzers correctly (21 ms)
+    ✓ should create log packet correctly (7 ms)
+    ✓ should select analyzer based on weights (8 ms)
+    ✓ should handle analyzer failures (3 ms)
+    ✓ should recover analyzer after going offline (5 ms)
+    ✓ should get distribution statistics (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        0.146 s
+
+-------------------------|---------|----------|---------|---------|-------------
+File                     | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------------|---------|----------|---------|---------|-------------
+All files                |   49.13 |     38.8 |    47.5 |   50.29 |
+ models                  |   54.83 |    44.44 |      40 |   54.83 |
+  LogMessage.js          |   63.63 |    66.66 |   33.33 |   63.63 | 15-34
+  LogPacket.js           |      50 |    33.33 |   42.85 |      50 | 19-24,32-50
+ services                |   47.88 |    37.93 |      50 |   49.26 |
+  AnalyzerManager.js     |   68.83 |    61.11 |   66.66 |   69.33 | 45-47,74,78,93,127-130,156-178,190
+  DistributionService.js |   23.07 |        0 |   33.33 |   24.59 | 31-163,191
+-------------------------|---------|----------|---------|---------|-------------
 ```
 
 ## 🔧 Configuration
@@ -305,10 +331,9 @@ if (cluster.isMaster) {
 │   ├── analyzer3.js
 │   └── analyzer4.js
 ├── test/
-│   └── test-distribution.js
+│   └── distribution.test.js
 ├── server.js
-├── docker-compose.yml
-└── load-test.yml
+└── docker-compose.yml
 ```
 
 ### Key Components

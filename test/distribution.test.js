@@ -15,6 +15,20 @@ describe('Distribution Service Tests', () => {
       { id: 'A3', endpoint: 'http://localhost:3003', weight: 0.2 },
       { id: 'A4', endpoint: 'http://localhost:3004', weight: 0.3 }
     ]);
+
+    console.log('--- new test ---');
+  });
+
+  afterEach(() => {
+    // Clean up background processes
+    if (distributionService) {
+      distributionService.stop();
+    }
+  });
+
+  afterAll(() => {
+    // Ensure all timers are cleared
+    jest.clearAllTimers();
   });
 
   test('should initialize analyzers correctly', () => {
